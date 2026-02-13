@@ -1,0 +1,7 @@
+{
+  "name": "TribeCode AI",
+  "description": "A conversational, voice-first app development platform where you build software with your AI tribe.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
