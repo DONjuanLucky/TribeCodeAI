@@ -20,5 +20,8 @@ export interface PrdStructure {
   techStack: string[];
   colorPalette: string[];
   version: number;
-  changeLog: string; // "Added dark mode", "Initial Draft", etc.
+  changeLog: string; 
+  roadmap: string[]; // Future milestones and feature steps
+  marketAnalysis?: string; // Competitive landscape or user demographic
+  uiUxDirection?: string; // Visual style and motion guidelines
 }

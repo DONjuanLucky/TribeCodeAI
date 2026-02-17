@@ -9,48 +9,46 @@ if (!API_KEY) {
 
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
-// We keep this service for the heavy lifting of generating the actual code
-// once the "Live" session has determined the PRD.
 export const generateCodeSnippet = async (prd: PrdStructure): Promise<string> => {
     const prompt = `
-    You are an expert Frontend Engineer.
-    Generate a single, standalone HTML file containing a responsive landing page or dashboard for this app.
+    You are an expert Frontend & 3D Motion Engineer.
+    Generate a single, standalone HTML file for "${prd.projectName}".
     
-    CRITICAL LAYOUT RULES:
-    1. Use Tailwind CSS via CDN: <script src="https://cdn.tailwindcss.com"></script>
-    2. MOBILE FIRST: The design must be fully responsive. 
-       - Use 'flex-col' on mobile and 'md:flex-row' for desktop layouts.
-       - Inputs and buttons should be 'w-full' on mobile.
-    3. SPACING & GAPS: 
-       - Use ample padding (p-4, p-6).
-       - ALWAYS use 'gap-4' or 'gap-6' for Flexbox and Grid containers. 
-       - DO NOT rely on margins between neighbors. 
-       - Ensure buttons have 'min-h-[48px]' for touch targets.
-       - PREVENT OVERLAP: If creating a grid (like a calculator or gallery), use 'grid gap-4' to strictly separate elements.
-    4. SCROLLING: The body must be scrollable. Do not use 'overflow-hidden' on the body or main container unless it's a specific full-screen tool.
-    5. COLOR: Strictly follow the Color Palette from the PRD.
-    6. VIBE: Make it look modern, high-quality, and "App-like" with rounded corners (rounded-xl).
-    7. ICONS: Use Font Awesome via CDN (<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">).
+    THE "REMOTION" 3D DIRECTIVE:
+    Treat this web page like a cinematic video composition (Remotion style).
+    1. 3D SCENE: Use Three.js (CDN: https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js) to create a high-fidelity 3D environment.
+       - Implement a "Camera Path": As the user scrolls or on entry, move the Three.js camera through the 3D space.
+       - Include 3D geometric objects or a particle system that reacts dynamically.
+    2. GSAP STAGING: Use GSAP (CDN: https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js) and ScrollTrigger (CDN: https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js) for time-based reveals.
+       - Every text block should have a staged entry (stagger, scale, blur-to-focus).
+       - Create a "Video-like" feel where elements enter and exit based on scroll position.
+    3. UI/UX: ${prd.uiUxDirection || 'Dark, high-contrast, premium aesthetic.'}
+    4. TECH: Strictly use Tailwind CSS (CDN: https://cdn.tailwindcss.com) for responsive layout.
+    5. THEME: ${prd.colorPalette.join(', ')}.
     
-    PRD Project Name: ${prd.projectName}
-    PRD Summary: ${prd.summary}
-    PRD Features: ${prd.features.join(', ')}
-    PRD Colors: ${prd.colorPalette.join(', ')}
+    PRD CONTEXT:
+    Name: ${prd.projectName}
+    Summary: ${prd.summary}
+    Features: ${prd.features.join(', ')}
+    Roadmap: ${prd.roadmap?.join(' -> ') || 'Initial launch'}
+    Market Analysis: ${prd.marketAnalysis || 'N/A'}
     
     Return ONLY the raw HTML code. Do NOT wrap it in markdown code blocks.
+    The code must be production-ready and visually STUNNING.
     `;
 
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-3-pro-preview', // High intelligence model for code
+            model: 'gemini-3-pro-preview',
             contents: prompt
         });
         
         let text = response.text || "";
+        // Clean up common wrapper formats if the model ignores the "no markdown" rule
         text = text.replace(/```html/g, '').replace(/```/g, '');
-        return text;
+        return text.trim();
     } catch (e) {
         console.error("Code Gen Error", e);
-        return "<!-- Error generating preview code. -->";
+        return "<!-- Error generating 3D preview code. -->";
     }
 }

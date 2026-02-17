@@ -6,40 +6,40 @@ import { LoadingScreen } from './components/LoadingScreen';
 import { Message, AppState, PrdStructure } from './types';
 import { generateCodeSnippet } from './services/geminiService';
 import { LiveClient } from './services/liveClient';
-import { Sparkles, ArrowRight, Power, Zap } from 'lucide-react';
+import { Sparkles, ArrowRight, Power, Zap, MessageSquare, Code2, Headphones, ChevronLeft } from 'lucide-react';
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(AppState.IDLE);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isConnected, setIsConnected] = useState(false);
+  const [tribeStatus, setTribeStatus] = useState<'idle' | 'listening' | 'thinking' | 'building'>('idle');
   
-  // Audio Volumes for Visualizer
   const [userVolume, setUserVolume] = useState(0);
   const [aiVolume, setAiVolume] = useState(0);
 
   const [generatedPrd, setGeneratedPrd] = useState<PrdStructure | null>(null);
   const [generatedCode, setGeneratedCode] = useState<string>('');
-  
-  // History / Changelog tracking
   const [history, setHistory] = useState<{prd: PrdStructure, code: string}[]>([]);
 
-  // Use a Ref for the client so it persists
   const liveClientRef = useRef<LiveClient | null>(null);
 
   useEffect(() => {
-    // Initialize LiveClient with API Key from Env
     const apiKey = process.env.API_KEY || '';
     if (apiKey) {
       liveClientRef.current = new LiveClient(apiKey);
       
-      // Hook up callbacks
       liveClientRef.current.onVolumeUpdate = (uVol, aVol) => {
         setUserVolume(uVol);
         setAiVolume(aVol);
       };
 
+      liveClientRef.current.onStatusChange = (status) => {
+        setTribeStatus(status);
+      };
+
       liveClientRef.current.onTranscriptUpdate = (text, isUser) => {
          setMessages(prev => {
+             if (text === "System: Initialize greeting.") return prev;
              const msg: Message = {
                  id: Date.now().toString(),
                  role: isUser ? 'user' : 'model',
@@ -65,23 +65,19 @@ const App: React.FC = () => {
       liveClientRef.current?.disconnect();
       setIsConnected(false);
       setAppState(AppState.IDLE);
+      setTribeStatus('idle');
     } else {
       if (!liveClientRef.current) return;
       try {
         await liveClientRef.current.connect();
         setIsConnected(true);
         setAppState(AppState.CONVERSATION);
-        
         setMessages([{
             id: 'system-1',
             role: 'model',
-            content: "Tribe connection established.",
+            content: "Neural link established. Tribe code-forge standing by...",
             timestamp: Date.now()
         }]);
-
-        // Note: The LiveClient now handles the initial system instruction and greeting 
-        // in its handleOpen method to ensure robust connection first.
-
       } catch (e) {
         console.error("Connection failed", e);
         alert("Could not connect to Tribe Network. Check permissions.");
@@ -90,31 +86,24 @@ const App: React.FC = () => {
   };
 
   const handleLockIn = async (prd: PrdStructure) => {
-    console.log("Lock-in Triggered", prd);
-    
-    // 1. Immediate UI Feedback
     setGeneratedPrd(prd);
     setAppState(AppState.BUILDING);
-    
-    // 2. Heavy lifting (Code Gen)
-    // We do this while the loading screen is showing
+    setTribeStatus('building');
     try {
         const code = await generateCodeSnippet(prd);
         setGeneratedCode(code);
-        
-        // 3. Add to History
-        setHistory(prev => [...prev, { prd, code }]);
-
-        // 4. Move to Preview only after code is ready
+        const newHistoryItem = { prd, code };
+        setHistory(prev => [...prev, newHistoryItem]);
         setAppState(AppState.PREVIEW);
-
-        // 5. Notify AI to present it
         if (liveClientRef.current && isConnected) {
-            liveClientRef.current.sendText("System: The app is now visible on screen. Present it to the user and ask for feedback.");
+            const currentVersion = history.length + 1;
+            const systemFeedback = `[SYSTEM UPDATE] Forge successful. Version ${currentVersion} for "${prd.projectName}" is LIVE. Build completion acknowledged.`;
+            liveClientRef.current.sendText(systemFeedback);
         }
     } catch (e) {
         console.error("Build failed", e);
-        setAppState(AppState.CONVERSATION); // Revert on failure
+        setAppState(AppState.CONVERSATION);
+        setTribeStatus('listening');
     }
   };
 
@@ -123,131 +112,156 @@ const App: React.FC = () => {
   return (
     <div className="h-[100dvh] w-full flex flex-col font-sans selection:bg-campfire-500 selection:text-white bg-black text-gray-100 overflow-hidden">
       
-      {/* Header */}
-      <header className="flex-none px-6 py-4 flex items-center justify-between border-b border-void-800 bg-void-900/80 backdrop-blur-sm z-50">
+      <header className="flex-none px-4 md:px-6 py-3 md:py-4 flex items-center justify-between border-b border-void-800 bg-void-900/80 backdrop-blur-sm z-50">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-campfire-600 to-campfire-400 flex items-center justify-center shadow-[0_0_15px_rgba(249,115,22,0.5)]">
-            <Sparkles className="text-white w-4 h-4" />
+          <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-gradient-to-tr from-campfire-600 to-campfire-400 flex items-center justify-center shadow-[0_0_15px_rgba(249,115,22,0.4)]">
+            <Sparkles className="text-white w-3 h-3 md:w-4 md:h-4" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-white">TribeCode AI</h1>
+          <h1 className="text-lg md:text-xl font-bold tracking-tight text-white truncate max-w-[120px] md:max-w-none">TribeCode</h1>
         </div>
         
-        {/* Progress Stepper (Desktop) */}
-        <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-400">
-            <span className={appState === AppState.CONVERSATION ? "text-campfire-400" : ""}>01 Vision</span>
-            <ArrowRight size={14} />
-            <span className={appState === AppState.BUILDING ? "text-campfire-400 animate-pulse" : ""}>02 Structure</span>
-            <ArrowRight size={14} />
-            <span className={appState === AppState.PREVIEW ? "text-campfire-400" : ""}>03 Execution</span>
+        <div className="hidden lg:flex items-center gap-6 text-sm font-medium text-gray-400">
+            <span className={`flex items-center gap-2 transition-all duration-500 ${appState === AppState.CONVERSATION ? "text-campfire-400 scale-105" : "text-gray-600"}`}>
+                <MessageSquare size={14} /> Blueprint
+            </span>
+            <ArrowRight size={14} className="opacity-10" />
+            <span className={`flex items-center gap-2 transition-all duration-500 ${appState === AppState.BUILDING ? "text-campfire-400 animate-pulse scale-105" : "text-gray-600"}`}>
+                <Code2 size={14} /> Forge
+            </span>
+            <ArrowRight size={14} className="opacity-10" />
+            <span className={`flex items-center gap-2 transition-all duration-500 ${appState === AppState.PREVIEW ? "text-campfire-400 scale-105" : "text-gray-600"}`}>
+                <Zap size={14} /> Launch
+            </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
              {isConnected && (
-                 <div className="flex items-center gap-2 animate-pulse bg-red-900/20 px-2 py-1 rounded-full border border-red-900/50">
-                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-                    <span className="text-[10px] font-mono text-red-400 font-bold tracking-wider">LIVE</span>
+                 <div className="flex items-center gap-2 bg-campfire-950/40 px-2 md:px-3 py-1 md:py-1.5 rounded-full border border-campfire-500/30">
+                    <div className="relative">
+                        <span className="w-1.5 h-1.5 bg-campfire-500 rounded-full block"></span>
+                        <span className="absolute inset-0 w-1.5 h-1.5 bg-campfire-500 rounded-full animate-ping"></span>
+                    </div>
+                    <span className="text-[8px] md:text-[10px] font-mono text-campfire-400 font-bold tracking-widest uppercase truncate max-w-[60px] md:max-w-none">
+                        {tribeStatus === 'listening' ? 'Listen' : tribeStatus === 'thinking' ? 'Think' : tribeStatus === 'building' ? 'Forge' : 'Synched'}
+                    </span>
                  </div>
              )}
             <button 
                 onClick={toggleConnection}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${isConnected ? 'bg-void-800 hover:bg-red-900/30 text-red-400 border border-red-900/50' : 'bg-campfire-600 hover:bg-campfire-500 text-white shadow-lg shadow-campfire-600/20'}`}
+                className={`flex items-center gap-2 px-3 md:px-5 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all ${isConnected ? 'bg-void-800 text-red-500 border border-red-900/40' : 'bg-campfire-600 text-white shadow-lg shadow-campfire-600/30'}`}
             >
-                <Power size={16} />
-                <span className="hidden md:inline">{isConnected ? "Disconnect" : "Connect Tribe"}</span>
+                <Power size={14} className="md:w-4 md:h-4" />
+                <span className="hidden xs:inline">{isConnected ? "Stop" : "Ignite"}</span>
+                <span className="xs:hidden">{isConnected ? "Off" : "On"}</span>
             </button>
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
-        
-        {/* Left Panel: Conversation & Campfire */}
         <div className={`
-            flex flex-col transition-all duration-500
-            ${isPreviewMode ? 'hidden md:flex md:w-[400px] md:border-r md:border-void-700' : 'flex-1 w-full'}
+            flex flex-col transition-all duration-700 h-full w-full
+            ${isPreviewMode ? 'hidden md:flex md:w-[380px] lg:w-[440px] md:border-r md:border-void-800 bg-void-950/80' : 'flex'}
         `}>
-            
-            {/* Visualizer Area */}
-            <div className="flex-1 flex flex-col items-center justify-center min-h-[200px] bg-gradient-to-b from-void-900 to-void-800 relative overflow-hidden">
-               
-               {/* Background Glow */}
-               <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-campfire-600/10 rounded-full blur-[100px] transition-opacity duration-1000 ${isConnected ? 'opacity-100' : 'opacity-0'}`}></div>
+            <div className={`flex flex-col items-center justify-center bg-gradient-to-b from-void-900 via-black to-void-900 relative overflow-hidden transition-all duration-500 ${isConnected ? 'h-[40%] md:h-[55%]' : 'h-full'}`}>
+               <div className={`absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,rgba(234,88,12,0.08),transparent_60%)] transition-opacity duration-1000 ${isConnected ? 'opacity-100' : 'opacity-0'}`}></div>
 
-               <Campfire 
-                  userVolume={userVolume}
-                  aiVolume={aiVolume}
-                  isActive={isConnected}
-                  onClick={toggleConnection}
-                  disabled={appState === AppState.BUILDING}
-               />
+               <div className="scale-75 md:scale-100 transition-transform">
+                <Campfire 
+                    userVolume={userVolume}
+                    aiVolume={aiVolume}
+                    isActive={isConnected}
+                    onClick={toggleConnection}
+                    disabled={appState === AppState.BUILDING}
+                    tribeStatus={tribeStatus}
+                />
+               </div>
                
-               {/* PROMINENT INSTRUCTION */}
                {isConnected && appState === AppState.CONVERSATION && (
-                   <div className="absolute bottom-10 animate-fade-in-up">
-                       <div className="bg-void-900/80 backdrop-blur-md border border-campfire-500/30 px-6 py-3 rounded-full shadow-2xl flex items-center gap-3">
-                           <Zap size={16} className="text-campfire-400 fill-campfire-400" />
-                           <span className="text-gray-300 text-sm font-medium">
-                               Ready to build? Say <span className="text-campfire-400 font-bold text-lg">"Tribe Up"</span>
-                           </span>
+                   <div className="absolute bottom-4 md:bottom-16 px-4 w-full flex justify-center animate-fade-in-up">
+                       <div className="bg-void-900/95 backdrop-blur-2xl border border-campfire-500/30 px-4 md:px-8 py-3 md:py-5 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col items-center gap-1 w-full max-w-[280px] md:max-w-md group transition-all">
+                           <div className="flex items-center gap-3">
+                               <div className="p-2 bg-campfire-500/20 rounded-lg shrink-0">
+                                    <Headphones size={18} className="text-campfire-500" />
+                               </div>
+                               <div className="flex flex-col min-w-0">
+                                   <span className="text-gray-400 text-[8px] md:text-[10px] uppercase tracking-[0.2em] font-black truncate">Forge Protocol</span>
+                                   <span className="text-white text-xs md:text-base font-bold truncate">
+                                       Say <span className="text-campfire-400 font-black">"TRIBE UP"</span>
+                                   </span>
+                               </div>
+                           </div>
                        </div>
                    </div>
                )}
 
-               {/* Idle Tip */}
                {appState === AppState.IDLE && !isConnected && (
-                   <div className="absolute bottom-10 text-center opacity-0 animate-[fadeIn_1s_ease-in_forwards_1s]">
-                       <p className="text-gray-500 text-sm mb-4">Tap the campfire to summon the tribe.</p>
+                   <div className="absolute bottom-10 md:bottom-20 text-center px-6">
+                       <p className="text-campfire-600/40 text-[10px] md:text-xs font-mono uppercase tracking-[0.3em] animate-pulse font-black leading-relaxed">Waiting for the spark of creation</p>
                    </div>
                )}
             </div>
 
-            {/* Chat Area (Transcript) */}
-            <div className="h-[40%] md:h-[40%] bg-void-900 border-t border-void-800 flex flex-col relative z-10">
-                <div className="absolute top-0 left-0 w-full h-4 bg-gradient-to-b from-void-900 to-transparent z-10 pointer-events-none"></div>
+            <div className={`flex-1 min-h-0 bg-black/60 border-t border-void-800/60 flex flex-col relative z-10 transition-opacity duration-500 ${isConnected ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                 <ChatInterface messages={messages} />
-                
-                {/* Connection Status Footer */}
-                <div className="p-3 bg-void-950 border-t border-void-800 flex justify-between items-center text-[10px] text-gray-600 font-mono uppercase tracking-widest">
-                    <span>Model: gemini-2.5-flash-native</span>
-                    <span>{isConnected ? "Listening for Trigger" : "Standby"}</span>
+                <div className="p-2 md:p-3 bg-void-950 border-t border-void-800 flex justify-between items-center text-[8px] md:text-[9px] text-gray-600 font-mono uppercase tracking-[0.1em]">
+                    <div className="flex items-center gap-2">
+                        <div className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-800'}`}></div>
+                        <span>Neural Peak</span>
+                    </div>
+                    <span className="hidden xs:inline">Forge AI v2.5</span>
                 </div>
             </div>
         </div>
 
-        {/* Right Panel: Preview / Loading */}
         {isPreviewMode && (
-            <div className="flex-1 flex flex-col bg-void-950 overflow-hidden animate-[slideInRight_0.5s_ease-out] relative h-full">
+            <div className="flex-1 flex flex-col bg-void-950 overflow-hidden animate-[slideInRight_0.5s_cubic-bezier(0.16,1,0.3,1)] relative h-full w-full">
                 {appState === AppState.BUILDING ? (
                     <LoadingScreen prd={generatedPrd} />
                 ) : (
                     generatedPrd && (
-                        <PrdPreview 
-                            prd={generatedPrd} 
-                            codeSnippet={generatedCode}
-                            history={history}
-                            onIterate={() => {
-                                setAppState(AppState.CONVERSATION);
-                            }}
-                        />
+                        <>
+                          <button 
+                            onClick={() => setAppState(AppState.CONVERSATION)}
+                            className="md:hidden absolute top-4 left-4 z-[60] bg-void-900/90 border border-void-700 p-2 rounded-xl text-gray-300 active:scale-95 transition-transform"
+                          >
+                            <ChevronLeft size={20} />
+                          </button>
+                          <PrdPreview 
+                              prd={generatedPrd} 
+                              codeSnippet={generatedCode}
+                              history={history}
+                              onIterate={() => {
+                                  setAppState(AppState.CONVERSATION);
+                              }}
+                          />
+                        </>
                     )
                 )}
-
-                {/* Floating Mobile Campfire Control for Preview Mode */}
-                <div className="md:hidden absolute bottom-6 right-6 z-50">
-                     <div className="bg-void-900/90 backdrop-blur-md rounded-full border border-campfire-500/30 shadow-2xl p-2 flex items-center justify-center">
-                        <Campfire 
-                           variant="mini"
-                           userVolume={userVolume}
-                           aiVolume={aiVolume}
-                           isActive={isConnected}
-                           onClick={toggleConnection}
-                        />
-                     </div>
-                </div>
             </div>
         )}
-
       </main>
+
+      <style>{`
+        @keyframes fade-in-up {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+        .animate-fade-in-up {
+            animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @media (max-width: 640px) {
+          .xs\:hidden { display: none; }
+          .xs\:inline { display: inline; }
+        }
+        @media (min-width: 641px) {
+          .xs\:hidden { display: block; }
+          .xs\:inline { display: none; }
+        }
+      `}</style>
     </div>
   );
 };
