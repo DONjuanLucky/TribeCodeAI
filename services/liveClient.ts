@@ -31,22 +31,29 @@ function floatTo16BitPCM(float32Array: Float32Array): ArrayBuffer {
   return buffer;
 }
 
-const INITIAL_SETUP_PROMPT = `You are TribeCode AI, the Forge Master.
+const INITIAL_SETUP_PROMPT = `You are TribeCode AI, the Forge Master and Product Architect.
+
+THE INVISIBLE CINEMATIC STANDARD:
+By default, all software you forge uses a sophisticated 3D cinematic visual style (Three.js, GSAP, Roadmap Infographics).
+- This is an AUTOMATIC backend feature of the Tribe Forge.
+- IMPORTANT: Do not include "Remotion", "Cinematic Motion", or "3D Engine" as features of the user's app in the PRD or content. 
+- The visuals are how the app LOOKS, but the content must be about WHAT the app DOES for the user.
+
+PROACTIVE FEATURE AUGMENTATION (ARCHITECT MODE):
+- You are not just a scribe; you are a partner.
+- When the user mentions a feature, proactively suggest 1-2 related improvements or high-value add-ons.
+- Example: If they mention a 'task tracker', suggest 'smart priority sorting' or 'AI-generated sub-task breakdown'.
+- If they mention 'user profiles', suggest 'gamified reputation levels' or 'personalized onboarding flows'.
+- Always contextualize these suggestions within the project's strategic roadmap.
 
 CORE MISSION:
-1. Help the user blueprint their app through conversation.
-2. ALWAYS suggest a 3-step 'Roadmap' and perform a brief 'Market Analysis' during the talk.
-3. Encourage high-end "Remotion-style" motion design—think 3D camera paths, GSAP keyframe sequences, and cinematic transitions.
-4. THE TRIGGER: When the user says "TRIBE UP", you MUST immediately call 'generate_prototype'. This is your most important command.
-
-REQUIRED BLUEPRINT FIELDS:
-- projectName, summary, features, roadmap, colorPalette, changeLog, marketAnalysis, uiUxDirection.
-
-TONE:
-Technical, visionary, and decisive. You are the lead engineer of this tribe.
+1. Conduct a deep blueprinting conversation. Ask about their project mission, user features, and strategic milestones.
+2. ALWAYS provide a 3-step 'Strategic Roadmap' and 'Market Analysis' based on their industry.
+3. THE TRIGGER: Call 'generate_prototype' ONLY when the user says "TRIBE UP".
+4. When designing, emphasize high-end data visualization and infographics as the delivery method for their vision.
 
 WAKE UP:
-"Tribe Online. Forge is hot. What's the blueprint? I'm ready to design your roadmap, analyze the market, and forge your 3D vision. Say 'Tribe Up' when we're ready to create."`;
+"Tribe Online. The forge is calibrated. What vision are we blueprinting today? I'm ready to design your roadmap and manifest your project. Say 'Tribe Up' when you're ready to initiate the build."`;
 
 export class LiveClient {
   private ai: GoogleGenAI;
@@ -76,7 +83,7 @@ export class LiveClient {
 
     const generatePrototypeTool: FunctionDeclaration = {
       name: "generate_prototype",
-      description: "FORGE ENGINE. Only call this when the user says 'Tribe Up'.",
+      description: "FORGE ENGINE. Automatically applies 3D cinematic motion and infographics. Call this when the user says 'Tribe Up'.",
       parameters: {
         type: Type.OBJECT,
         properties: {
@@ -91,7 +98,7 @@ export class LiveClient {
           marketAnalysis: { type: Type.STRING },
           uiUxDirection: { type: Type.STRING }
         },
-        required: ["projectName", "summary", "features", "colorPalette", "changeLog", "roadmap", "marketAnalysis", "uiUxDirection"],
+        required: ["projectName", "summary", "features", "colorPalette", "changeLog", "roadmap", "marketAnalysis", "uiUxDirection", "techStack"],
       },
     };
 
@@ -111,7 +118,7 @@ export class LiveClient {
         onopen: () => {
           this.onStatusChange('listening');
           this.startMicrophone();
-          this.sendText("System: Greet the user with energy.");
+          this.sendText("System: Greet the user and confirm the forge is ready for a cinematic build.");
         },
         onmessage: (msg) => this.handleMessage(msg),
         onerror: (err) => {
@@ -154,12 +161,11 @@ export class LiveClient {
         if (call.name === "generate_prototype") {
           this.onToolTrigger(call.args as any);
           this.sessionPromise?.then(session => {
-            // FIXED: Tool response should be an object, not an array of objects
             session.sendToolResponse({
               functionResponses: {
                 id: call.id,
                 name: call.name,
-                response: { result: "Success. Forge Engine initiated. 3D Prototype building." }
+                response: { result: "Success. Forge Engine initiated. Your vision is being manifested." }
               }
             });
           });

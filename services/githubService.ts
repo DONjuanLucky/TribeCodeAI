@@ -29,7 +29,7 @@ export const exportToGitHub = async (
         headers,
         body: JSON.stringify({
           name: repoName,
-          description: `Built with TribeCode AI: ${prd.tagline}`,
+          description: `Built with TribeCode AI: ${prd.tagline || 'A TribeCode Project'}`,
           private: false,
           auto_init: true,
         }),
@@ -73,23 +73,30 @@ export const exportToGitHub = async (
       }
     };
 
-    // 3. Prepare PRD Markdown
+    // 3. Prepare PRD Markdown with safe array access
+    const featuresList = (prd.features || []).map(f => `- ${f}`).join('\n');
+    const techStackList = (prd.techStack || []).map(t => `- ${t}`).join('\n');
+    const roadmapList = (prd.roadmap || []).map(r => `- ${r}`).join('\n');
+
     const prdMarkdown = `
-# ${prd.projectName}
-> ${prd.tagline}
+# ${prd.projectName || 'Unnamed Project'}
+> ${prd.tagline || 'Manifested by TribeCode AI'}
 
 ## Summary
-${prd.summary}
+${prd.summary || 'No summary provided.'}
 
 ## Features
-${prd.features.map(f => `- ${f}`).join('\n')}
+${featuresList || 'No features defined.'}
 
 ## Tech Stack
-${prd.techStack.map(t => `- ${t}`).join('\n')}
+${techStackList || 'No tech stack defined.'}
+
+## Roadmap
+${roadmapList || 'No roadmap defined.'}
 
 ## Build Metadata
-- Version: ${prd.version}
-- Changelog: ${prd.changeLog}
+- Version: ${prd.version || 1}
+- Changelog: ${prd.changeLog || 'Initial release'}
 
 ---
 Built with [TribeCode AI](https://github.com/your-repo-link) 🏕️

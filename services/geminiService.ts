@@ -11,30 +11,29 @@ const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 export const generateCodeSnippet = async (prd: PrdStructure): Promise<string> => {
     const prompt = `
-    You are an expert Frontend & 3D Motion Engineer.
-    Generate a single, standalone HTML file for "${prd.projectName}".
-    
-    THE "REMOTION" 3D DIRECTIVE:
-    Treat this web page like a cinematic video composition (Remotion style).
-    1. 3D SCENE: Use Three.js (CDN: https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js) to create a high-fidelity 3D environment.
-       - Implement a "Camera Path": As the user scrolls or on entry, move the Three.js camera through the 3D space.
-       - Include 3D geometric objects or a particle system that reacts dynamically.
-    2. GSAP STAGING: Use GSAP (CDN: https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js) and ScrollTrigger (CDN: https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js) for time-based reveals.
-       - Every text block should have a staged entry (stagger, scale, blur-to-focus).
-       - Create a "Video-like" feel where elements enter and exit based on scroll position.
-    3. UI/UX: ${prd.uiUxDirection || 'Dark, high-contrast, premium aesthetic.'}
-    4. TECH: Strictly use Tailwind CSS (CDN: https://cdn.tailwindcss.com) for responsive layout.
-    5. THEME: ${prd.colorPalette.join(', ')}.
-    
-    PRD CONTEXT:
-    Name: ${prd.projectName}
-    Summary: ${prd.summary}
-    Features: ${prd.features.join(', ')}
-    Roadmap: ${prd.roadmap?.join(' -> ') || 'Initial launch'}
-    Market Analysis: ${prd.marketAnalysis || 'N/A'}
-    
-    Return ONLY the raw HTML code. Do NOT wrap it in markdown code blocks.
-    The code must be production-ready and visually STUNNING.
+    You are an expert Frontend & Motion Engineer. Your task is to build a high-end, production-ready prototype for "${prd.projectName}".
+
+    CONTENT DIRECTIVE (STRICT):
+    - The website/app content MUST be 100% about "${prd.projectName}" and its purpose: "${prd.summary}".
+    - You MUST NOT mention "Remotion", "Cinematic Sequences", "Motion Graphics", "3D Engines", or any technical library names in the UI text.
+    - Write copy as if this is a real, standalone product for customers. Do not explain how the app was built.
+
+    VISUAL DIRECTIVE (AUTOMATIC CINEMATIC ENGINE):
+    - Automatically use a 3D cinematic style for the UI.
+    - VISUALS: Use Three.js (CDN: https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js) for an immersive 3D background or interactive roadmap nodes.
+    - INFOGRAPHICS: Represent ${prd.projectName}'s data or roadmap milestones as interactive 3D structures or high-end SVG infographics.
+    - ANIMATION: Use GSAP (CDN: https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js) and ScrollTrigger (CDN: https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js) to create smooth, high-fidelity camera movements as the user scrolls.
+    - STYLING: Tailwind CSS (CDN: https://cdn.tailwindcss.com). Theme: ${prd.colorPalette.join(', ')}. Use a dark, premium aesthetic.
+
+    PROJECT CONTEXT:
+    - App Name: ${prd.projectName}
+    - Tagline: ${prd.tagline}
+    - User Features: ${prd.features.join(', ')}
+    - Data Roadmap: ${prd.roadmap?.join(' -> ')}
+    - Market Context: ${prd.marketAnalysis}
+
+    TECHNICAL REQUIREMENT:
+    Return ONLY the raw HTML/JS/CSS code in a single standalone file. No markdown, no commentary. The app must feel like a premium, finished product focused solely on its mission.
     `;
 
     try {
@@ -44,11 +43,10 @@ export const generateCodeSnippet = async (prd: PrdStructure): Promise<string> =>
         });
         
         let text = response.text || "";
-        // Clean up common wrapper formats if the model ignores the "no markdown" rule
         text = text.replace(/```html/g, '').replace(/```/g, '');
         return text.trim();
     } catch (e) {
         console.error("Code Gen Error", e);
-        return "<!-- Error generating 3D preview code. -->";
+        return "<!-- Forge failed to manifest the cinematic environment. Verify API key. -->";
     }
 }
