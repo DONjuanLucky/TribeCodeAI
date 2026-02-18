@@ -117,10 +117,10 @@ const App: React.FC = () => {
           <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-gradient-to-tr from-campfire-600 to-campfire-400 flex items-center justify-center shadow-[0_0_15px_rgba(249,115,22,0.4)]">
             <Sparkles className="text-white w-3 h-3 md:w-4 md:h-4" />
           </div>
-          <h1 className="text-lg md:text-xl font-bold tracking-tight text-white truncate max-w-[120px] md:max-w-none">TribeCode</h1>
+          <h1 className="text-lg md:text-xl font-bold tracking-tight text-white truncate max-w-[120px] md:max-w-none">TribeCode AI</h1>
         </div>
         
-        <div className="hidden lg:flex items-center gap-6 text-sm font-medium text-gray-400">
+        <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-gray-400">
             <span className={`flex items-center gap-2 transition-all duration-500 ${appState === AppState.CONVERSATION ? "text-campfire-400 scale-105" : "text-gray-600"}`}>
                 <MessageSquare size={14} /> Blueprint
             </span>
@@ -132,7 +132,7 @@ const App: React.FC = () => {
             <span className={`flex items-center gap-2 transition-all duration-500 ${appState === AppState.PREVIEW ? "text-campfire-400 scale-105" : "text-gray-600"}`}>
                 <Zap size={14} /> Launch
             </span>
-        </div>
+        </nav>
 
         <div className="flex items-center gap-2 md:gap-3">
              {isConnected && (
@@ -149,6 +149,7 @@ const App: React.FC = () => {
             <button 
                 onClick={toggleConnection}
                 className={`flex items-center gap-2 px-3 md:px-5 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all ${isConnected ? 'bg-void-800 text-red-500 border border-red-900/40' : 'bg-campfire-600 text-white shadow-lg shadow-campfire-600/30'}`}
+                aria-label={isConnected ? "Disconnect from AI Forge" : "Initialize AI Forge"}
             >
                 <Power size={14} className="md:w-4 md:h-4" />
                 <span className="hidden xs:inline">{isConnected ? "Stop" : "Ignite"}</span>
@@ -164,6 +165,14 @@ const App: React.FC = () => {
         `}>
             <div className={`flex flex-col items-center justify-center bg-gradient-to-b from-void-900 via-black to-void-900 relative overflow-hidden transition-all duration-500 ${isConnected ? 'h-[40%] md:h-[55%]' : 'h-full'}`}>
                <div className={`absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,rgba(234,88,12,0.08),transparent_60%)] transition-opacity duration-1000 ${isConnected ? 'opacity-100' : 'opacity-0'}`}></div>
+
+               {/* SEO Content Injection */}
+               {!isConnected && appState === AppState.IDLE && (
+                 <div className="sr-only">
+                   <h2>The Future of AI Software Architecture</h2>
+                   <p>TribeCode AI empowers developers and visionaries to manifest software using a conversational, voice-first forge. Iterate through high-fidelity roadmaps and cinematic 3D prototypes instantly.</p>
+                 </div>
+               )}
 
                <div className="scale-75 md:scale-100 transition-transform">
                 <Campfire 
@@ -195,7 +204,9 @@ const App: React.FC = () => {
                )}
 
                {appState === AppState.IDLE && !isConnected && (
-                   <div className="absolute bottom-10 md:bottom-20 text-center px-6">
+                   <div className="absolute bottom-10 md:bottom-20 text-center px-6 max-w-lg">
+                       <h2 className="text-campfire-500 text-lg md:text-2xl font-bold mb-2">Manifest Your Vision</h2>
+                       <p className="text-gray-400 text-xs md:text-sm mb-6 leading-relaxed">Ignite the campfire to start a conversation with the Forge Master. We'll blueprint your roadmap and forge your cinematic 3D prototype together.</p>
                        <p className="text-campfire-600/40 text-[10px] md:text-xs font-mono uppercase tracking-[0.3em] animate-pulse font-black leading-relaxed">Waiting for the spark of creation</p>
                    </div>
                )}
@@ -206,9 +217,13 @@ const App: React.FC = () => {
                 <div className="p-2 md:p-3 bg-void-950 border-t border-void-800 flex justify-between items-center text-[8px] md:text-[9px] text-gray-600 font-mono uppercase tracking-[0.1em]">
                     <div className="flex items-center gap-2">
                         <div className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-800'}`}></div>
-                        <span>Neural Peak</span>
+                        <span>Neural Peak Active</span>
                     </div>
-                    <span className="hidden xs:inline">Forge AI v2.5</span>
+                    <div className="flex gap-4">
+                        <a href="#blueprint" className="hover:text-campfire-400 transition-colors">Blueprint</a>
+                        <a href="#forge" className="hover:text-campfire-400 transition-colors">Forge</a>
+                        <span className="hidden xs:inline">TribeCode AI v2.5.0-stable</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -223,6 +238,7 @@ const App: React.FC = () => {
                           <button 
                             onClick={() => setAppState(AppState.CONVERSATION)}
                             className="md:hidden absolute top-4 left-4 z-[60] bg-void-900/90 border border-void-700 p-2 rounded-xl text-gray-300 active:scale-95 transition-transform"
+                            aria-label="Back to blueprint"
                           >
                             <ChevronLeft size={20} />
                           </button>

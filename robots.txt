@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://tribecode-ai.app/sitemap.xml
